@@ -25,13 +25,24 @@ AC_ARG_WITH([jdk],
                    [AC_MSG_ERROR(JDK not found at '${with_jdk}'.)])],
             [AC_MSG_ERROR([No JDK specified.])])
 
+dnl Support for macOS universal binaries
+AC_ARG_ENABLE([fat-binaries],
+              [AS_HELP_STRING([--disable-fat-binaries],
+                              [On macOS, only build for the current architecture.])],
+              [build_fat_binaries=$enableval],
+              [build_fat_binaries=yes])
+AS_IF([test "x$build_fat_binaries" = xyes],
+      [MACOS_EXTRA_CFLAGS="-arch x86_64 -arch arm64"],
+      [MACOS_EXTRA_CFLAGS=""])
+
 dnl Host-based tweaks
 AC_CANONICAL_HOST
 AS_CASE([$host],
         [*-*-linux-*], [AC_DEFINE([PROTEGE_LINUX], [1], [GNU/Linux version])
                         JDK_CPPFLAGS="$JDK_CPPFLAGS -I${with_jdk}/include/linux"],
         [*-*-darwin*], [AC_DEFINE([PROTEGE_MACOS], [1], [macOS version])
-                        JDK_CPPFLAGS="$JDK_CPPFLAGS -I${with_jdk}/include/darwin"],
+                        JDK_CPPFLAGS="$JDK_CPPFLAGS -I${with_jdk}/include/darwin"
+                        CFLAGS="$CFLAGS $MACOS_EXTRA_CFLAGS"],
         [*-*-mingw32], [AC_DEFINE([PROTEGE_WIN32], [1], [Windows version])
                         JDK_CPPFLAGS="$JDK_CPPFLAGS -I${with_jdk}/include/win32"],
         [AC_MSG_ERROR(["Unsupported host: ${host}"])])
