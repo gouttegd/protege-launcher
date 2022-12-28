@@ -8,5 +8,5 @@ protege_SOURCES = src/protege.c src/options.h src/options.c \
 		  src/util.c src/util.h src/java.c src/java.h \
 		  $(convlib_sources)
 
-AM_CPPFLAGS = -I$(top_srcdir)/lib
+AM_CPPFLAGS = -I$(top_srcdir)/lib ${JDK_CPPFLAGS}
 LDADD = $(LIBOBJS)
