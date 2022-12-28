@@ -34,13 +34,15 @@
 
 #include "util.h"
 
-#include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <unistd.h>
-#include <sys/stat.h>
 
 #include <xmem.h>
+
+#if defined(PROTEGE_LINUX)
+
+#include <unistd.h>
+#include <sys/stat.h>
 
 char *
 get_application_directory(void)
@@ -87,6 +89,50 @@ get_application_directory(void)
 
     return buffer;
 }
+
+#elif defined(PROTEGE_MACOS)
+
+#include <mach-o/dyld.h>
+
+char *
+get_application_directory(void)
+{
+    char *buffer = NULL;
+    uint32_t buffer_len = 0;
+    int n = 2;
+
+    (void) _NSGetExecutablePath(buffer, &buffer_len);
+    buffer = xmalloc(buffer_len);
+    (void) _NSGetExecutablePath(buffer, &buffer_len);
+
+    while ( buffer_len-- > 0 && n > 0 ) {
+        if ( buffer[buffer_len] == '/' ) {
+            buffer[buffer_len] = '\0';
+            n -= 1;
+        }
+    }
+
+    if ( buffer_len == 0 ) {
+        /* No / found in the path. */
+        free(buffer);
+        buffer = NULL;
+        errno = ENOENT;
+    }
+
+    return buffer;
+}
+
+#elif defined(PROTEGE_WIN32)
+
+char *
+get_application_directory(void)
+{
+    /* TODO */
+    errno = ENOSYS;
+    return NULL;
+}
+
+#endif
 
 static int
 discard_line(FILE *f)

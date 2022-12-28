@@ -33,14 +33,20 @@
 
 #include <jni.h>
 
+#if defined(PROTEGE_LINUX)
 #define JAVA_LIB_PATH "lib/server/libjvm.so"
+#elif defined(PROTEGE_MACOS)
+#define JAVA_LIB_PATH "lib/jli/libjli.dylib"
+#endif
+
 #define BUNDLED_JAVA_LIB_PATH "jre/" JAVA_LIB_PATH
 
-#define JAVA_CLASS_NOT_FOUND    -1
-#define JAVA_METHOD_NOT_FOUND   -2
-#define JAVA_OUT_OF_MEMORY      -3
-#define JAVA_SYMBOL_NOT_FOUND   -4
-#define JAVA_CREATE_VM_ERROR    -5
+#define JAVA_CLASS_NOT_FOUND        -1
+#define JAVA_METHOD_NOT_FOUND       -2
+#define JAVA_OUT_OF_MEMORY          -3
+#define JAVA_SYMBOL_NOT_FOUND       -4
+#define JAVA_CREATE_VM_ERROR        -5
+#define JAVA_CREATE_THREAD_ERROR    -6
 
 #ifdef __cplusplus
 extern "C" {

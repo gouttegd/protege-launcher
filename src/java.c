@@ -133,11 +133,19 @@ get_java_options(const char **options, int *n_options)
     return jvm_opts;
 }
 
+#if !defined(PROTEGE_MACOS)
 int
 start_java(void        *jre,
            const char **vm_args,
            const char  *main_class,
            const char **main_args)
+#else
+static int
+start_java_impl(void        *jre,
+                const char **vm_args,
+                const char  *main_class,
+                const char **main_args)
+#endif
 {
     JavaVM *jvm = NULL;
     JavaVMInitArgs jvm_args;
@@ -176,6 +184,77 @@ start_java(void        *jre,
     return ret;
 }
 
+#if defined(PROTEGE_MACOS)
+
+#include <err.h>
+#include <pthread.h>
+#include <CoreFoundation/CoreFoundation.h>
+
+/*
+ * Dummy callback for the main thread loop.
+ */
+static void
+dummy_callback(void *info) { }
+
+struct java_start_info
+{
+    void        *jre;
+    const char **vm_args;
+    const char  *main_class;
+    const char **main_args;
+};
+
+static void *
+start_java_wrapper(void *info)
+{
+    struct java_start_info *jinfo;
+    int ret;
+
+    jinfo = (struct java_start_info *)info;
+    if ( (ret = start_java_impl(jinfo->jre, jinfo->vm_args, jinfo->main_class,
+                                jinfo->main_args)) != 0 )
+        errx(EXIT_FAILURE, "Cannot start Java: %s", get_java_error(ret));
+
+    exit(EXIT_SUCCESS);
+}
+
+int
+start_java(void        *jre,
+           const char **vm_args,
+           const char  *main_class,
+           const char **main_args)
+{
+    pthread_t jvm_thread;
+    pthread_attr_t jvm_thread_attr;
+    CFRunLoopSourceContext loop_context;
+    CFRunLoopSourceRef loop_ref;
+    struct java_start_info info;
+
+    info.jre = jre;
+    info.vm_args = vm_args;
+    info.main_class = main_class;
+    info.main_args = main_args;
+
+    /* Start the thread where the JVM will run. */
+    pthread_attr_init(&jvm_thread_attr);
+    pthread_attr_setscope(&jvm_thread_attr, PTHREAD_SCOPE_SYSTEM);
+    pthread_attr_setdetachstate(&jvm_thread_attr, PTHREAD_CREATE_DETACHED);
+    if ( pthread_create(&jvm_thread, &jvm_thread_attr, start_java_wrapper,
+                        (void *)&info) != 0 )
+        return JAVA_CREATE_THREAD_ERROR;
+
+    /* Run a dummy loop in the main thread. */
+    memset(&loop_context, 0, sizeof(loop_context));
+    loop_context.perform = &dummy_callback;
+    loop_ref = CFRunLoopSourceCreate(NULL, 0, &loop_context);
+    CFRunLoopAddSource(CFRunLoopGetCurrent(), loop_ref, kCFRunLoopCommonModes);
+    CFRunLoopRun();
+
+    return 0;
+}
+
+#endif
+
 const char *
 get_java_error(int code)
 {
@@ -185,6 +264,7 @@ get_java_error(int code)
     case JAVA_OUT_OF_MEMORY: return "Cannot allocate Java objects";
     case JAVA_SYMBOL_NOT_FOUND: return "Cannot find JNI symbol";
     case JAVA_CREATE_VM_ERROR: return "Cannot create Java virtual machine";
+    case JAVA_CREATE_THREAD_ERROR: return "Cannot create Java thread";
     default: return "Unknown error";
     }
 }

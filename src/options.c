@@ -48,6 +48,12 @@ static const char *default_options[] = {
     "-DentityExpansionLimit=100000000",
     "-Dfile.encoding=UTF-8",
     "-XX:CompileCommand=exclude,javax/swing/text/GlyphView,getBreakSpot",
+#if defined(PROTEGE_MACOS)
+    "-Dapple.laf.useScreenMenuBar=true",
+    "-Dcom.apple.mrj.application.apple.menu.about.name=Protege",
+    "-Xdock:name=Protege",
+    "-Xdock:icon=Resources/Protege.icns",
+#endif
     "-Djava.class.path"
       "=bundles/guava.jar"
       ":bundles/logback-classic.jar"
@@ -114,6 +120,48 @@ find_configuration_file(const char *app_dir)
     return conf_file;
 }
 
+#if defined(PROTEGE_MACOS)
+
+#include <CoreFoundation/CoreFoundation.h>
+
+static void
+get_options_from_bundle(struct option_list *list)
+{
+    CFBundleRef main_bundle;
+    CFDictionaryRef info_dict;
+    CFArrayRef jvmopts_array;
+    CFIndex length, i;
+
+    if ( ! (main_bundle = CFBundleGetMainBundle()) )
+        return;
+
+    if ( ! (info_dict = CFBundleGetInfoDictionary(main_bundle)) )
+        return;
+
+    if ( ! (jvmopts_array = (CFArrayRef)CFDictionaryGetValue(info_dict, CFSTR("JVMOptions"))) )
+        return;
+
+    length = CFArrayGetCount(jvmopts_array);
+    for ( i = 0; i < length; i++ ) {
+        CFStringRef option = CFArrayGetValueAtIndex(jvmopts_array, i);
+        if ( CFStringHasPrefix(option, CFSTR("-Xmx"))
+            || CFStringHasPrefix(option, CFSTR("-Xms"))
+            || CFStringHasPrefix(option, CFSTR("-Xss")) ) {
+            CFIndex option_length;
+            char *option_string;
+
+            option_length = CFStringGetLength(option);
+            option_string = xmalloc(option_length + 1);
+            CFStringGetCString(option, option_string, option_length + 1,
+                               kCFStringEncodingMacRoman);
+
+            append_option(list, option_string);
+        }
+    }
+}
+
+#endif
+
 void
 get_option_list(const char *app_dir, struct option_list *list)
 {
@@ -159,6 +207,10 @@ get_option_list(const char *app_dir, struct option_list *list)
 
         free(conf_file);
     }
+#if defined(PROTEGE_MACOS)
+    else
+        get_options_from_bundle(list);
+#endif
 }
 
 void

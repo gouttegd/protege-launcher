@@ -42,7 +42,8 @@ AS_CASE([$host],
                         JDK_CPPFLAGS="$JDK_CPPFLAGS -I${with_jdk}/include/linux"],
         [*-*-darwin*], [AC_DEFINE([PROTEGE_MACOS], [1], [macOS version])
                         JDK_CPPFLAGS="$JDK_CPPFLAGS -I${with_jdk}/include/darwin"
-                        CFLAGS="$CFLAGS $MACOS_EXTRA_CFLAGS"],
+                        CFLAGS="$CFLAGS $MACOS_EXTRA_CFLAGS"
+                        LDFLAGS="$LDFLAGS -framework Cocoa"],
         [*-*-mingw32], [AC_DEFINE([PROTEGE_WIN32], [1], [Windows version])
                         JDK_CPPFLAGS="$JDK_CPPFLAGS -I${with_jdk}/include/win32"],
         [AC_MSG_ERROR(["Unsupported host: ${host}"])])
