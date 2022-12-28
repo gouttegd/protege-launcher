@@ -32,8 +32,15 @@ AC_ARG_ENABLE([fat-binaries],
               [build_fat_binaries=$enableval],
               [build_fat_binaries=yes])
 AS_IF([test "x$build_fat_binaries" = xyes],
-      [MACOS_EXTRA_CFLAGS="-arch x86_64 -arch arm64"],
-      [MACOS_EXTRA_CFLAGS=""])
+      [MACOS_EXTRA_CFLAGS="$MACOS_EXTRA_CFLAGS -arch x86_64 -arch arm64"],
+      [MACOS_EXTRA_CFLAGS="$MACOS_EXTRA_CFLAGS"])
+
+dnl Set minimal version of macOS targeted
+AC_ARG_WITH([min-osx-version],
+            [AS_HELP_STRING([--with-min-osx-version],
+                            [Specify the minimum macOS version the launcher will run on.])],
+            [MACOS_EXTRA_CFLAGS="$MACOS_EXTRA_CFLAGS -mmacosx-version-min=$withval"],
+            [MACOS_EXTRA_CFLAGS="$MACOS_EXTRA_CFLAGS"])
 
 dnl Host-based tweaks
 AC_CANONICAL_HOST
