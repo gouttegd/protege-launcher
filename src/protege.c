@@ -41,6 +41,11 @@
 #include "java.h"
 #include "options.h"
 
+#if defined(PROTEGE_WIN32)
+#include <windows.h>
+#include <stdio.h>
+#endif
+
 static char *app_dir = NULL;
 struct option_list opt_list;
 
@@ -61,6 +66,15 @@ main(int argc, char **argv)
 
     (void) argc;
     (void) argv;
+
+#if defined(PROTEGE_WIN32)
+    /* If the launcher was started from a terminal, let's make sure
+     * it is used to display what we send to the output streams. */
+    if ( AttachConsole(-1) ) {
+        freopen("CONOUT$", "w", stdout);
+        freopen("CONOUT$", "w", stderr);
+    }
+#endif
 
     setprogname("protege");
     (void) atexit(cleanup);

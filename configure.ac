@@ -62,7 +62,8 @@ AS_CASE([$host],
                         CFLAGS="$CFLAGS $MACOS_EXTRA_CFLAGS"
                         LDFLAGS="$LDFLAGS -framework Cocoa"],
         [*-*-mingw32], [AC_DEFINE([PROTEGE_WIN32], [1], [Windows version])
-                        JDK_CPPFLAGS="$JDK_CPPFLAGS -I${with_jdk}/include/win32"],
+                        JDK_CPPFLAGS="$JDK_CPPFLAGS -I${with_jdk}/include/win32"
+                        CFLAGS="$CFLAGS -mwindows"],
         [AC_MSG_ERROR(["Unsupported host: ${host}"])])
 
 AC_SUBST([JDK_CPPFLAGS])
