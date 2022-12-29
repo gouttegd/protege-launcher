@@ -124,12 +124,34 @@ get_application_directory(void)
 
 #elif defined(PROTEGE_WIN32)
 
+#include <windows.h>
+
 char *
 get_application_directory(void)
 {
-    /* TODO */
-    errno = ENOSYS;
-    return NULL;
+    char *buffer;
+    DWORD len;
+
+    buffer = xmalloc(PROTEGE_PATH_MAX);
+    len = GetModuleFileName(NULL, buffer, PROTEGE_PATH_MAX);
+
+    if ( len == PROTEGE_PATH_MAX ) {
+        free(buffer);
+        buffer = NULL;
+        errno = ENAMETOOLONG;
+    }
+    else {
+        while ( len-- > 0 && buffer[len] != '\\' ) ;
+        if ( len > 0 )
+            buffer[len] = '\0';
+        else {
+            free(buffer);
+            buffer = NULL;
+            errno = ENOENT;
+        }
+    }
+
+    return buffer;
 }
 
 #endif
