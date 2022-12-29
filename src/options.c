@@ -165,6 +165,30 @@ get_options_from_bundle(struct option_list *list)
     }
 }
 
+#elif defined(PROTEGE_WIN32)
+
+static void
+get_options_from_l4j_file(const char *app_dir, struct option_list *list)
+{
+    char *l4j_filename, line[100];
+    FILE *l4j_file;
+    ssize_t n;
+
+    (void) xasprintf(&l4j_filename, "%s\\Protege.l4j.ini", app_dir);
+    if ( (l4j_file = fopen(l4j_filename, "r")) ) {
+        while ( ! feof(l4j_file) ) {
+            if ( (n = get_line(l4j_file, line, sizeof(line))) > 0 ) {
+                if ( line[0] == '-' )
+                    append_option(list, xstrdup(line));
+            }
+        }
+
+        fclose(l4j_file);
+    }
+
+    free(l4j_filename);
+}
+
 #endif
 
 void
@@ -215,6 +239,9 @@ get_option_list(const char *app_dir, struct option_list *list)
 #if defined(PROTEGE_MACOS)
     else
         get_options_from_bundle(list);
+#elif defined(PROTEGE_WIN32)
+    else
+        get_options_from_l4j_file(app_dir, list);
 #endif
 }
 
