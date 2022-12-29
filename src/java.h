@@ -47,13 +47,14 @@
 #define JAVA_SYMBOL_NOT_FOUND       -4
 #define JAVA_CREATE_VM_ERROR        -5
 #define JAVA_CREATE_THREAD_ERROR    -6
+#define JAVA_DLOPEN_ERROR           -7
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-void*
-load_jre(const char *path, int bundled);
+int
+load_jre(const char *path, int bundled, void **jre);
 
 int
 start_java(void        *jre,

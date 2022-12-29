@@ -70,8 +70,8 @@ main(int argc, char **argv)
     if ( chdir(app_dir) == -1 )
         err(EXIT_FAILURE, "Cannot change current directory");
 
-    if ( ! (jre = load_jre(app_dir, 1)) )
-        err(EXIT_FAILURE, "Cannot load JRE");
+    if ( (ret = load_jre(app_dir, 1, &jre)) != 0 )
+        errx(EXIT_FAILURE, "Cannot load JRE: %s", get_java_error(ret));
 
     get_option_list(app_dir, &opt_list);
 

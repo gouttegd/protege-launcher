@@ -59,8 +59,8 @@ load_jre_from_path(const char *base_path, const char *lib_path)
     return lib;
 }
 
-void*
-load_jre(const char *path, int bundled)
+int
+load_jre(const char *path, int bundled, void **jre)
 {
     void *lib = NULL;
 
@@ -70,7 +70,8 @@ load_jre(const char *path, int bundled)
     if ( ! lib && (path = getenv("JAVA_HOME")) )
         lib = load_jre_from_path(path, JAVA_LIB_PATH);
 
-    return lib;
+    *jre = lib;
+    return lib ? 0 : JAVA_DLOPEN_ERROR;
 }
 
 static jobjectArray
@@ -265,6 +266,7 @@ get_java_error(int code)
     case JAVA_SYMBOL_NOT_FOUND: return "Cannot find JNI symbol";
     case JAVA_CREATE_VM_ERROR: return "Cannot create Java virtual machine";
     case JAVA_CREATE_THREAD_ERROR: return "Cannot create Java thread";
+    case JAVA_DLOPEN_ERROR: return dlerror();
     default: return "Unknown error";
     }
 }
