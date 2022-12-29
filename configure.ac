@@ -11,8 +11,18 @@ AM_INIT_AUTOMAKE([foreign subdir-objects silent-rules])
 dnl Check for development tools
 AC_PROG_CC
 
+dnl Check for err* functions, and provide replacements as needed
+dnl Check for some non-ibiquitous functions
+ICP_CHECK_NOTCH_FUNCS
+
 dnl Check for dlopen
+AC_CHECK_HEADERS([dlfcn.h], [], [AC_CONFIG_LINKS([dlfcn.h:lib/dlopen.compat.h])])
 AC_SEARCH_LIBS([dlopen], [dl])
+AC_REPLACE_FUNCS([dlopen])
+
+dnl Check for Windows API functions
+AC_CHECK_HEADERS([windows.h])
+AC_SEARCH_LIBS([PathFileExistsA], [shlwapi])
 
 dnl Java Development Kit
 dnl We don't try to detect it; whoever calls configure should

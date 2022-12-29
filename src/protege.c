@@ -62,6 +62,7 @@ main(int argc, char **argv)
     (void) argc;
     (void) argv;
 
+    setprogname("protege");
     (void) atexit(cleanup);
 
     if ( ! (app_dir = get_application_directory()) )
