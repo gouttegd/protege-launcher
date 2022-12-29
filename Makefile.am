@@ -4,7 +4,7 @@ dist_doc_DATA = AUTHORS COPYING.BSD COPYING.GPL README.md src/protege.ico
 
 bin_PROGRAMS = protege
 
-convlib_sources = lib/xmem.c lib/xmem.h
+convlib_sources = lib/xmem.c lib/xmem.h lib/compat.h
 
 protege_SOURCES = src/protege.c src/options.h src/options.c \
 		  src/util.c src/util.h src/java.c src/java.h \
