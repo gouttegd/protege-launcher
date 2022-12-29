@@ -46,15 +46,57 @@
 
 typedef jint (JNICALL CreateJavaVM_t)(JavaVM **vm, JNIEnv **env, JavaVMInitArgs *args);
 
+#if defined(PROTEGE_WIN32)
+
+#include <windows.h>
+#include <shlwapi.h>
+
+static void
+expand_dll_path(const char *lib_path)
+{
+    char *folder_path, *last_slash;
+    int n = 2;
+
+    if ( PathFileExists(lib_path) ) {
+        folder_path = xstrdup(lib_path);
+        while ( n-- > 0 && (last_slash = strrchr(folder_path, '\\')) )
+            *last_slash = '\0';
+
+        (void) SetDllDirectory(folder_path);
+
+        free(folder_path);
+    }
+}
+
+#endif
+
 void*
 load_jre_from_path(const char *base_path, const char *lib_path)
 {
     void *lib;
     char *full_path = NULL;
 
-    (void) xasprintf(&full_path, "%s/%s", base_path, lib_path);
+    (void) xasprintf(&full_path, "%s%s", base_path, lib_path);
+#if defined(PROTEGE_WIN32)
+    /*
+     * On Windows, loading the jvm.dll library may fail (with a not very
+     * helpful error message) because it may require loading some other
+     * JDK libraries that are located in the JRE's bin directory, but
+     * the loader doesn't know it has to look for them in that
+     * directory. So we need to explicitly add that directory to the
+     * DLL search path before attempting to use LoadLibrary.
+     */
+    expand_dll_path(full_path);
+#endif
+
     lib = dlopen(full_path, RTLD_LAZY);
     free(full_path);
+
+#if defined(PROTEGE_WIN32)
+    /* If the library couldn't be loaded, reset the DLL search path. */
+    if ( ! lib )
+        (void) SetDllDirectory(NULL);
+#endif
 
     return lib;
 }

@@ -43,6 +43,12 @@
 
 #include "util.h"
 
+#if defined(PROTEGE_WIN32)
+#define JAVA_CLASSPATH_SEPARATOR ";"
+#else
+#define JAVA_CLASSPATH_SEPARATOR ":"
+#endif
+
 static const char *default_options[] = {
     "-Dlogback.configurationFile=conf/logback.xml",
     "-DentityExpansionLimit=100000000",
@@ -54,15 +60,14 @@ static const char *default_options[] = {
     "-Xdock:name=Protege",
     "-Xdock:icon=Resources/Protege.icns",
 #endif
-    "-Djava.class.path"
-      "=bundles/guava.jar"
-      ":bundles/logback-classic.jar"
-      ":bundles/logback-core.jar"
-      ":bundles/slf4j-api.jar"
-      ":bundles/glassfish-corba-orb.jar"
-      ":bundles/org.apache.felix.main.jar"
-      ":bundles/maven-artifact.jar"
-      ":bundles/protege-launcher.jar",
+    "-Djava.class.path=bundles/guava.jar"
+      JAVA_CLASSPATH_SEPARATOR "bundles/logback-classic.jar"
+      JAVA_CLASSPATH_SEPARATOR "bundles/logback-core.jar"
+      JAVA_CLASSPATH_SEPARATOR "bundles/slf4j-api.jar"
+      JAVA_CLASSPATH_SEPARATOR "bundles/glassfish-corba-orb.jar"
+      JAVA_CLASSPATH_SEPARATOR "bundles/org.apache.felix.main.jar"
+      JAVA_CLASSPATH_SEPARATOR "bundles/maven-artifact.jar"
+      JAVA_CLASSPATH_SEPARATOR "bundles/protege-launcher.jar",
     NULL
 };
 
