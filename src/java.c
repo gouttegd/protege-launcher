@@ -118,7 +118,7 @@ start_java_main(JNIEnv *env, const char  *main_class_name, const char **args)
 }
 
 static JavaVMOption *
-get_java_options(const char **options, int *n_options)
+get_java_options(const char **options, jint *n_options)
 {
     JavaVMOption *jvm_opts = NULL;
     size_t n;
