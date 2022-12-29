@@ -8,6 +8,12 @@ AC_CONFIG_LIBOBJ_DIR([lib])
 AC_USE_SYSTEM_EXTENSIONS
 AM_INIT_AUTOMAKE([foreign subdir-objects silent-rules])
 
+dnl Program infos
+PROTEGE_WINDOWS_VERSION="5, 6, 0, 0"
+PROTEGE_VERSION="5.6.0-beta-1-SNAPSHOT"
+AC_SUBST([PROTEGE_WINDOWS_VERSION])
+AC_SUBST([PROTEGE_VERSION])
+
 dnl Check for development tools
 AC_PROG_CC
 
@@ -23,6 +29,7 @@ AC_REPLACE_FUNCS([dlopen])
 dnl Check for Windows API functions
 AC_CHECK_HEADERS([windows.h])
 AC_SEARCH_LIBS([PathFileExistsA], [shlwapi])
+AC_CHECK_TOOL([WINDRES], [windres])
 
 dnl Java Development Kit
 dnl We don't try to detect it; whoever calls configure should
@@ -56,20 +63,25 @@ dnl Host-based tweaks
 AC_CANONICAL_HOST
 AS_CASE([$host],
         [*-*-linux-*], [AC_DEFINE([PROTEGE_LINUX], [1], [GNU/Linux version])
-                        JDK_CPPFLAGS="$JDK_CPPFLAGS -I${with_jdk}/include/linux"],
+                        JDK_CPPFLAGS="$JDK_CPPFLAGS -I${with_jdk}/include/linux"
+                        PROTEGE_PLATFORM=linux],
         [*-*-darwin*], [AC_DEFINE([PROTEGE_MACOS], [1], [macOS version])
                         JDK_CPPFLAGS="$JDK_CPPFLAGS -I${with_jdk}/include/darwin"
                         CFLAGS="$CFLAGS $MACOS_EXTRA_CFLAGS"
-                        LDFLAGS="$LDFLAGS -framework Cocoa"],
+                        LDFLAGS="$LDFLAGS -framework Cocoa"
+                        PROTEGE_PLATFORM=macos],
         [*-*-mingw32], [AC_DEFINE([PROTEGE_WIN32], [1], [Windows version])
                         JDK_CPPFLAGS="$JDK_CPPFLAGS -I${with_jdk}/include/win32"
-                        CFLAGS="$CFLAGS -mwindows"],
+                        CFLAGS="$CFLAGS -mwindows"
+                        PROTEGE_PLATFORM=windows],
         [AC_MSG_ERROR(["Unsupported host: ${host}"])])
 
 AC_SUBST([JDK_CPPFLAGS])
 
+AM_CONDITIONAL([PROTEGE_WIN32], [test x$PROTEGE_PLATFORM = xwindows])
+
 dnl Output files
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile src/winres.rc])
 AC_OUTPUT
 
 dnl Summary

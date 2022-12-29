@@ -1,0 +1,25 @@
+#include <winver.h>
+
+1 VERSIONINFO
+FILEVERSION     @PROTEGE_WINDOWS_VERSION@
+PRODUCTVERSION  @PROTEGE_WINDOWS_VERSION@
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904E4"
+    BEGIN
+      VALUE "FileDescription",  "Protégé Ontology Editor"
+      VALUE "FileVersion",      "@PROTEGE_VERSION@"
+      VALUE "LegalCopyright",   "Stanford University"
+      VALUE "OriginalFilename", "protege.exe"
+      VALUE "ProductName",      "Protégé"
+      VALUE "ProductVersion",   "Protégé @PROTEGE_VERSION@"
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1252
+  END
+END
+
+2 ICON protege.ico
