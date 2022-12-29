@@ -1,5 +1,7 @@
 ACLOCAL_AMFLAGS = -I m4 --install
 
+dist_doc_DATA = AUTHORS COPYING.BSD COPYING.GPL README.md src/protege.ico
+
 bin_PROGRAMS = protege
 
 convlib_sources = lib/xmem.c lib/xmem.h
