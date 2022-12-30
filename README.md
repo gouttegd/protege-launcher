@@ -81,6 +81,16 @@ $ make
 The resulting `protege` binary can then be placed inside the directory
 containing the GNU/Linux distribution of Protégé.
 
+If building straight from the repository (instead of from a release
+tarball), you’ll need to generate the build system first. Make sure you
+have the _autotools_ installed and run:
+
+```sh
+$ autoreconf -i
+```
+
+Then run the `configure` script as above.
+
 
 ### Building for macOS
 
@@ -94,7 +104,8 @@ $ make
 ```
 
 The resulting binary is by default a _universal binary_ targeting both
-x86\_64 and arm64.
+x86\_64 and arm64. Place it inside the `Protégé.app/Contents/MacOS`
+directory of the macOS distribution of Protégé.
 
 Beware that by default, the compiler seems to generate binaries that can
 only run on a version of macOS at least as high as the version on which
@@ -103,18 +114,16 @@ will not run on any macOS < 13.0). Use the `--with-min-osx-version`
 option at configure time to change that:
 
 ```sh
-$ ./configure --with-jdk=<path_to_the_jdk> \
-    --with-min-osx-version=11.0
+$ ./configure --with-jdk=<path_to_the_jdk> --with-min-osx-version=11.0
 ```
 
 Building for macOS under GNU/Linux has been tested to work with the
 [OSXCross](https://github.com/tpoechtrager/osxcross) cross-compiling
-environment. With OSXcross installed and in the _PATH_, the launcher may
+environment. With OSXCross installed and in the _PATH_, the launcher may
 be built with:
 
 ```sh
-$ CC=o64-clang ./configure --with-jdk=<path_to_the_jdk> \
-    --host=x86_64-apple-darwin21.4
+$ ./configure --with-jdk=<path_to_the_jdk> --host=x86_64-apple-darwin21.4 CC=o64-clang
 $ make
 ```
 
@@ -132,10 +141,12 @@ Building for Windows has only been tested under GNU/Linux using the
 installed and in the _PATH_, build the launcher with:
 
 ```sh
-$ ./configure --with-jdk=<path_to_the_jdk> \
-    --host=x86_64-w64-mingw32
+$ ./configure --with-jdk=<path_to_the_jdk> --host=x86_64-w64-mingw32
 $ make
 ```
+
+Place the resulting `protege.exe` binary inside the directory containing
+the Windows distribution of Protégé.
 
 Similarly to cross-compiling for macOS, when cross-compiling for Windows
 you need a _Windows_ JDK.
