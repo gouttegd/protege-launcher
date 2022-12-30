@@ -99,11 +99,11 @@ load_jre_from_path(const char *base_path, const char *lib_path)
      * directory. So we need to explicitly add that directory to the
      * DLL search path before attempting to use LoadLibrary.
      */
-    if ( PathFileExists(lib_path) ) {
+    if ( PathFileExists(full_path) ) {
         char *bin_path, *last_slash;
         int n = 2;
 
-        bin_path = xstrdup(lib_path);
+        bin_path = xstrdup(full_path);
         while ( n-- > 0 && (last_slash = strrchr(bin_path, '\\')) )
             *last_slash = '\0';
 
