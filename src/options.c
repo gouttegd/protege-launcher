@@ -149,9 +149,7 @@ get_options_from_bundle(struct option_list *list)
     length = CFArrayGetCount(jvmopts_array);
     for ( i = 0; i < length; i++ ) {
         CFStringRef option = CFArrayGetValueAtIndex(jvmopts_array, i);
-        if ( CFStringHasPrefix(option, CFSTR("-Xmx"))
-            || CFStringHasPrefix(option, CFSTR("-Xms"))
-            || CFStringHasPrefix(option, CFSTR("-Xss")) ) {
+        if ( CFStringHasPrefix(option, CFSTR("-")) ) {
             CFIndex option_length;
             char *option_string;
 
