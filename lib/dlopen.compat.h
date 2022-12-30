@@ -19,6 +19,12 @@
 #ifndef ICP20221228_DLOPEN_H
 #define ICP20221228_DLOPEN_H
 
+/*
+ * The values used here are taken from the GNU C Library.
+ * We define those symbols solely to allow compiling a code
+ * that makes use of them, but they are actually ignored by
+ * the LoadLibrary-based implementation of dlopen on Windows.
+ */
 #define RTLD_LAZY       0x0001
 #define RTLD_NOW        0x0002
 #define RTLD_GLOBAL     0x0100

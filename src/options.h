@@ -33,10 +33,15 @@
 
 #include <stdlib.h>
 
+/*
+ * Hold a NULL-terminated list of strings.
+ */
 struct option_list {
-    size_t      allocated;
-    size_t      count;
-    char      **options;
+    size_t      allocated;  /* Number of strings allocated in options
+                               (including terminating NULL). */
+    size_t      count;      /* Number of strings present in options
+                               (excluding terminating NULL). */
+    char      **options;    /* Actual list of strings. */
 };
 
 #ifdef __cplusplus
@@ -44,10 +49,10 @@ extern "C" {
 #endif
 
 void
-get_option_list(const char *, struct option_list *);
+get_option_list(const char *app_dir, struct option_list *list);
 
 void
-free_option_list(struct option_list *);
+free_option_list(struct option_list *list);
 
 #ifdef __cplusplus
 }

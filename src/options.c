@@ -49,6 +49,10 @@
 #define JAVA_CLASSPATH_SEPARATOR ":"
 #endif
 
+/*
+ * Default options. They are needed for Protégé to start and run
+ * correctly and are always used.
+ */
 static const char *default_options[] = {
     "-Dlogback.configurationFile=conf/logback.xml",
     "-DentityExpansionLimit=100000000",
@@ -73,6 +77,11 @@ static const char *default_options[] = {
 
 static size_t n_default_options = sizeof(default_options) / sizeof(char**) - 1;
 
+/*
+ * Fill the list structure with the default options.
+ * The string themselves are *not* duplicated, the list will only
+ * contain a pointer to them.
+ */
 static void
 copy_default_options(struct option_list *list)
 {
@@ -85,21 +94,35 @@ copy_default_options(struct option_list *list)
     list->count = n;
 }
 
+/*
+ * Append one option to the options list.
+ */
 static void
 append_option(struct option_list *list, char *option)
 {
+    /* If it's the first non-default option that we add, we need to
+     * fill the list with the default options first. */
     if ( ! list->allocated )
         copy_default_options(list);
 
+    /* Grow the list as needed. */
     if ( list->count >= list->allocated - 1 ) {
         list->allocated += 10;
         list->options = xrealloc(list->options, list->allocated);
     }
 
+    /* Append the option. */
     list->options[list->count++] = option;
     list->options[list->count] = NULL;
 }
 
+/*
+ * Try to find a jvm.conf configuration file. We look into the user's
+ * home directory, then into the Protégé directory.
+ *
+ * Returns a newly allocated buffer containing the path to the
+ * configuration file that was found, or NULL if we didn't find any.
+ */
 static char *
 find_configuration_file(const char *app_dir)
 {
@@ -129,6 +152,12 @@ find_configuration_file(const char *app_dir)
 
 #include <CoreFoundation/CoreFoundation.h>
 
+/*
+ * Expand the list of options with options found in a JVMOptions key in
+ * the application's Info.plist file.
+ *
+ * This is the "legacy" method of passing Java options on macOS.
+ */
 static void
 get_options_from_bundle(struct option_list *list)
 {
@@ -165,6 +194,12 @@ get_options_from_bundle(struct option_list *list)
 
 #elif defined(PROTEGE_WIN32)
 
+/*
+ * Expand the list of options with options found in a Protege.l4j.ini
+ * file in Protégé directory.
+ *
+ * This is the "legacy" method of passing Java options on Windows.
+ */
 static void
 get_options_from_l4j_file(const char *app_dir, struct option_list *list)
 {
@@ -189,15 +224,36 @@ get_options_from_l4j_file(const char *app_dir, struct option_list *list)
 
 #endif
 
+/**
+ * Get a list of all options that should be passed to the Java virtual
+ * machine.
+ *
+ * This function returns at least a set of hard-coded default options.
+ * In addition, it attempts to get user-specified additional options
+ * from a 'jvm.conf' file (located either in ~/.protege/conf/jvm.conf'
+ * or in $app_dir/conf/jvm.conf) and from "legacy" locations on macOS
+ * and Windows.
+ *
+ * @param app_dir The directory where Protégé is installed.
+ * @param list    A pointer to a structure to be filled with the
+ *                complete set of options. The contents of that
+ *                structure should be free with free_option_list.
+ */
 void
 get_option_list(const char *app_dir, struct option_list *list)
 {
     char *conf_file;
 
+    /*
+     * At first we make the list point to the static list of default
+     * options. That way we don't need to allocate anything if there is
+     * no additional options.
+     */
     list->allocated = 0;
     list->count = n_default_options;
     list->options = (char **) default_options;
 
+    /* Then we look for a configuration file with extra options. */
     if ( (conf_file = find_configuration_file(app_dir)) ) {
         FILE *f;
         char line[100], *opt_value, *opt_string;
@@ -234,6 +290,11 @@ get_option_list(const char *app_dir, struct option_list *list)
 
         free(conf_file);
     }
+    /*
+     * Without a configuration file, on macOS and Windows we fallback to
+     * some "legacy" locations where options used to be found in older
+     * versions of Protégé.
+     */
 #if defined(PROTEGE_MACOS)
     else
         get_options_from_bundle(list);
@@ -243,14 +304,23 @@ get_option_list(const char *app_dir, struct option_list *list)
 #endif
 }
 
+/**
+ * Free the list of options.
+ *
+ * @param list The options list to free.
+ */
 void
 free_option_list(struct option_list *list)
 {
+    /* Nothing to free if the list only contains the default options. */
     if ( list->allocated ) {
         size_t n;
 
+        /* Free the non-default, additional options. */
         for ( n = n_default_options; list->options[n]; n++ )
             free(list->options[n]);
+
+        /* Free the list itself. */
         free(list->options);
     }
 }

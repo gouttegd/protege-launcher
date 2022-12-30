@@ -44,6 +44,13 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+/**
+ * Get Protégé's directory. This returns the pathname to the directory
+ * containing this executable and all Protégé files.
+ *
+ * @return A newly allocated buffer containing the pathname, or NULL if
+ *         an error occured.
+ */
 char *
 get_application_directory(void)
 {
@@ -94,6 +101,13 @@ get_application_directory(void)
 
 #include <mach-o/dyld.h>
 
+/**
+ * Get Protégé's directory. This returns the pathname to the "Contents"
+ * directory inside the Protégé.app bundle.
+ *
+ * @return A newly allocated buffer containing the pathname, or NULL if
+ *         an error occured.
+ */
 char *
 get_application_directory(void)
 {
@@ -105,6 +119,11 @@ get_application_directory(void)
     buffer = xmalloc(buffer_len);
     (void) _NSGetExecutablePath(buffer, &buffer_len);
 
+    /*
+     * The executable is in Protégé.app/Contents/MacOS/protege.
+     * We remove the last two components to get to the "Contents"
+     * directory.
+     */
     while ( buffer_len-- > 0 && n > 0 ) {
         if ( buffer[buffer_len] == '/' ) {
             buffer[buffer_len] = '\0';
@@ -126,6 +145,13 @@ get_application_directory(void)
 
 #include <windows.h>
 
+/**
+ * Get Protégé's directory. This returns the pathname to the directory
+ * containing this executable and all Protégé files.
+ *
+ * @return A newly allocated buffer containing the pathname, or NULL if
+ *         an error occured.
+ */
 char *
 get_application_directory(void)
 {
@@ -156,6 +182,10 @@ get_application_directory(void)
 
 #endif
 
+/*
+ * Discard characters from the specified stream up to the next
+ * end of line.
+ */
 static int
 discard_line(FILE *f)
 {
@@ -166,6 +196,18 @@ discard_line(FILE *f)
     return c == EOF ? -1 : 0;
 }
 
+/**
+ * Read a single line from the specified stream.
+ * This function differs from standard fgets(3) in two aspects: the
+ * newline character is not stored, and if the line to read is too long
+ * to fit into the provided buffer, the whole line is discarded.
+ *
+ * @param f      The stream to read from.
+ * @param buffer A character buffer to be filled with the read line.
+ * @param len    Size of the @a buffer array.
+ *
+ * @return The number of characters read, or -1 if an error occured.
+ */
 ssize_t
 get_line(FILE *f, char *buffer, size_t len)
 {

@@ -33,17 +33,6 @@
 
 #include <jni.h>
 
-#if defined(PROTEGE_LINUX)
-#define JAVA_LIB_PATH "/lib/server/libjvm.so"
-#define BUNDLED_JAVA_LIB_PATH "/jre" JAVA_LIB_PATH
-#elif defined(PROTEGE_MACOS)
-#define JAVA_LIB_PATH "/lib/jli/libjli.dylib"
-#define BUNDLED_JAVA_LIB_PATH "/jre" JAVA_LIB_PATH
-#elif defined(PROTEGE_WIN32)
-#define JAVA_LIB_PATH "\\bin\\server\\jvm.dll"
-#define BUNDLED_JAVA_LIB_PATH "\\jre" JAVA_LIB_PATH
-#endif
-
 #define JAVA_CLASS_NOT_FOUND        -1
 #define JAVA_METHOD_NOT_FOUND       -2
 #define JAVA_OUT_OF_MEMORY          -3

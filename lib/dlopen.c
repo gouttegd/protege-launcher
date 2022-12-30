@@ -45,6 +45,7 @@ store_error_message(void)
 {
     DWORD error_code;
 
+    /* Free any previously allocated memory from an earlier call. */
     reset_error_message();
 
     error_code = GetLastError();
@@ -60,10 +61,14 @@ store_error_message(void)
 
     dlerror_extern = dlerror_buffer;
 
-    if ( ! dlerror_cleanup_registered ) {
-        atexit(reset_error_message);
+    /*
+     * Make sure memory is freed at the end.
+     * Technically not necessary as any modern OS will always free
+     * all memory allocated by a process when it terminates, but
+     * cleaning up your own mess is a good habit.
+     */
+    if ( ! dlerror_cleanup_registered && atexit(reset_error_message) == 0 )
         dlerror_cleanup_registered = 1;
-    }
 }
 
 void *
@@ -106,10 +111,14 @@ dlsym(void *handle, const char *symbol)
 char *
 dlerror(void)
 {
+    /*
+     * We must return NULL if we we're called more than once and no
+     * error occured between calls.
+     */
     char *tmp = dlerror_extern;
     dlerror_extern = NULL;
     return tmp;
 }
 
-#endif /* !HAVE_WINDOWS_H */
+#endif /* HAVE_WINDOWS_H */
 #endif /* !HAVE_DLOPEN */

@@ -34,42 +34,54 @@
 
 #include "java.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-
 #include <dlfcn.h>
 
 #include <jni.h>
 
 #include <xmem.h>
 
-typedef jint (JNICALL CreateJavaVM_t)(JavaVM **vm, JNIEnv **env, JavaVMInitArgs *args);
-
 #if defined(PROTEGE_WIN32)
-
-#include <windows.h>
-#include <shlwapi.h>
-
-static void
-expand_dll_path(const char *lib_path)
-{
-    char *folder_path, *last_slash;
-    int n = 2;
-
-    if ( PathFileExists(lib_path) ) {
-        folder_path = xstrdup(lib_path);
-        while ( n-- > 0 && (last_slash = strrchr(folder_path, '\\')) )
-            *last_slash = '\0';
-
-        (void) SetDllDirectory(folder_path);
-
-        free(folder_path);
-    }
-}
-
+#include <windows.h>    /* SetDllDirectory */
+#include <shlwapi.h>    /* PathFileExists */
+#include <string.h>     /* strrchr */
 #endif
 
+
+/*
+ * JAVA_LIB_PATH is the name and location of the main Java library
+ * (the library containing the JNI_CreateJavaVM function) within the
+ * JRE. This seems to change depending on the JRE version, the locations
+ * used here are correct for the JRE 11 used by Protégé 5.6.0.
+ */
+#if   defined(PROTEGE_LINUX)
+#define JAVA_LIB_PATH "/lib/server/libjvm.so"
+#elif defined(PROTEGE_MACOS)
+#define JAVA_LIB_PATH "/lib/jli/libjli.dylib"
+#elif defined(PROTEGE_WIN32)
+#define JAVA_LIB_PATH "\\bin\\server\\jvm.dll"
+#endif
+
+/*
+ * BUNDLED_JAVA_LIB_PATH is the location of the Java library within
+ * Protégé's directory, when using the bundled JRE.
+ */
+#if defined(PROTEGE_WIN32)
+#define BUNDLED_JAVA_LIB_PATH "\\jre" JAVA_LIB_PATH
+#else
+#define BUNDLED_JAVA_LIB_PATH "/jre" JAVA_LIB_PATH
+#endif
+
+
+typedef jint (JNICALL CreateJavaVM_t)(JavaVM **vm, JNIEnv **env, JavaVMInitArgs *args);
+
+
+/*
+ * Catenate the two specified path components and attempt to load the
+ * Java library from the resulting full pathname.
+ *
+ * Returns a handle to the loaded library if loading was successful,
+ * otherwise NULL.
+ */
 void*
 load_jre_from_path(const char *base_path, const char *lib_path)
 {
@@ -77,6 +89,7 @@ load_jre_from_path(const char *base_path, const char *lib_path)
     char *full_path = NULL;
 
     (void) xasprintf(&full_path, "%s%s", base_path, lib_path);
+
 #if defined(PROTEGE_WIN32)
     /*
      * On Windows, loading the jvm.dll library may fail (with a not very
@@ -86,7 +99,17 @@ load_jre_from_path(const char *base_path, const char *lib_path)
      * directory. So we need to explicitly add that directory to the
      * DLL search path before attempting to use LoadLibrary.
      */
-    expand_dll_path(full_path);
+    if ( PathFileExists(lib_path) ) {
+        char *bin_path, *last_slash;
+        int n = 2;
+
+        bin_path = xstrdup(lib_path);
+        while ( n-- > 0 && (last_slash = strrchr(bin_path, '\\')) )
+            *last_slash = '\0';
+
+        (void) SetDllDirectory(bin_path);
+        free(bin_path);
+    }
 #endif
 
     lib = dlopen(full_path, RTLD_LAZY);
@@ -101,13 +124,31 @@ load_jre_from_path(const char *base_path, const char *lib_path)
     return lib;
 }
 
+/**
+ * Attempt to load the Java library.
+ *
+ * @param[in] path    The base directory from where the Java library
+ *                    should be loaded; if NULL, JAVA_HOME will be used
+ *                    if it is defined in the environment.
+ * @param[in] bundled If non-zero, @a path is expected to be the
+ *                    Protégé directory, and the Java library will be
+ *                    looked for in the jre/ subdirectory; otherwise,
+ *                    @a path is assumed to be a JRE directory.
+ * @param[out] jre    A pointer that will receive the handle to the
+ *                    Java library after it has been loaded.
+ *
+ * @return
+ * - 0 if the Java library has been successfully loaded;
+ * - JAVA_DLOPEN_ERROR if an error occured.
+ */
 int
 load_jre(const char *path, int bundled, void **jre)
 {
     void *lib = NULL;
 
     if ( path )
-        lib = load_jre_from_path(path, bundled ? BUNDLED_JAVA_LIB_PATH : JAVA_LIB_PATH);
+        lib = load_jre_from_path(path, bundled ?
+                                 BUNDLED_JAVA_LIB_PATH : JAVA_LIB_PATH);
 
     if ( ! lib && (path = getenv("JAVA_HOME")) )
         lib = load_jre_from_path(path, JAVA_LIB_PATH);
@@ -116,18 +157,25 @@ load_jre(const char *path, int bundled, void **jre)
     return lib ? 0 : JAVA_DLOPEN_ERROR;
 }
 
+/*
+ * Convert the specified char ** array into an equivalent Java array.
+ *
+ * May return NULL if the Java array itself or one of its String
+ * elements could not be allocated.
+ */
 static jobjectArray
 get_arguments(JNIEnv *env, const char **args)
 {
     size_t n;
     jobjectArray java_args = NULL;
 
-    for ( n = 0; args && args[n]; n++ ) ;
+    for ( n = 0; args && args[n]; n++ ) ;   /* Number of items in array. */
 
     java_args = (*env)->NewObjectArray(env, n,
                                        (*env)->FindClass(env, "java/lang/String"),
                                        (*env)->NewStringUTF(env, ""));
     for ( n = 0; java_args && args && args[n]; n++ ) {
+        /* Populate each array item. */
         jstring arg = (*env)->NewStringUTF(env, args[n]);
         if ( arg )
             (*env)->SetObjectArrayElement(env, java_args, n, arg);
@@ -138,6 +186,11 @@ get_arguments(JNIEnv *env, const char **args)
     return java_args;
 }
 
+/*
+ * Call the main method of a Java class.
+ *
+ * Returns 0 if successful, or a JAVA_* error value.
+ */
 static int
 start_java_main(JNIEnv *env, const char  *main_class_name, const char **args)
 {
@@ -160,6 +213,12 @@ start_java_main(JNIEnv *env, const char  *main_class_name, const char **args)
     return 0;
 }
 
+/*
+ * Convert a strings array into an array of JavaVMOption structures.
+ *
+ * The options array must be NULL-terminated. The number of options
+ * will be returned to the n_options parameter.
+ */
 static JavaVMOption *
 get_java_options(const char **options, jint *n_options)
 {
@@ -176,6 +235,17 @@ get_java_options(const char **options, jint *n_options)
     return jvm_opts;
 }
 
+/**
+ * Start the Java virtual machine.
+ *
+ * @param jre        A handle to the Java library.
+ * @param vm_args    A NULL-terminated list of Java options.
+ * @param main_class The name of the Java main class.
+ * @param main_args  A NULL-terminated list of arguments for the main
+ *                   method; may be NULL itself for no arguments.
+ *
+ * @return 0 if successful, or one of the JAVA_* error values.
+ */
 #if !defined(PROTEGE_MACOS)
 int
 start_java(void        *jre,
@@ -229,16 +299,21 @@ start_java_impl(void        *jre,
 
 #if defined(PROTEGE_MACOS)
 
+/*
+ * On macOS, the Java virtual machine must be started in a separate
+ * thread, while the first thread runs an infinite loop. This is needed
+ * to properly receive events from the operating system.
+ */
+
 #include <err.h>
 #include <pthread.h>
 #include <CoreFoundation/CoreFoundation.h>
 
-/*
- * Dummy callback for the main thread loop.
- */
+/*Dummy callback for the main thread loop. */
 static void
 dummy_callback(void *info) { }
 
+/* Wrap the parameters to the real start_java function. */
 struct java_start_info
 {
     void        *jre;
@@ -247,6 +322,12 @@ struct java_start_info
     const char **main_args;
 };
 
+/*
+ * The function that will run in the dedicated thread. Merely a wrapper
+ * for the start_java_impl function above. Explicitly calls exit at the
+ * end (whether start_java_impl was successful or not) to cause the
+ * dummy loop in the first thread to stop.
+ */
 static void *
 start_java_wrapper(void *info)
 {
@@ -261,6 +342,9 @@ start_java_wrapper(void *info)
     exit(EXIT_SUCCESS);
 }
 
+/*
+ * Start the Java virtual machine in a dedicated thread.
+ */
 int
 start_java(void        *jre,
            const char **vm_args,
@@ -298,6 +382,13 @@ start_java(void        *jre,
 
 #endif
 
+/**
+ * Get an error message from a JAVA_* error value.
+ *
+ * @param code The error value returned by load_jre or start_java.
+ * @return An error message; the caller should not attempt to either
+ *         free or modify the buffer.
+ */
 const char *
 get_java_error(int code)
 {
