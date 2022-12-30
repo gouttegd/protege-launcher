@@ -10,7 +10,7 @@ protege_SOURCES = src/protege.c src/options.h src/options.c \
 		  src/util.c src/util.h src/java.c src/java.h \
 		  $(convlib_sources)
 
-AM_CPPFLAGS = -I$(top_srcdir)/lib ${JDK_CPPFLAGS}
+AM_CPPFLAGS = -I$(top_srcdir)/lib $(JDK_CPPFLAGS)
 
 if PROTEGE_WIN32
   LDADD = $(LIBOBJS) src/winres.$(OBJEXT)
