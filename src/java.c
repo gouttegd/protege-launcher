@@ -128,8 +128,9 @@ load_jre_from_path(const char *base_path, const char *lib_path)
  * Attempt to load the Java library.
  *
  * @param[in] path    The base directory from where the Java library
- *                    should be loaded; if NULL, JAVA_HOME will be used
- *                    if it is defined in the environment.
+ *                    should be loaded; if NULL, PROTEGE_JAVA_HOME and
+ *                    JAVA_HOME will be successively tested if they are
+ *                    defined in the environment.
  * @param[in] bundled If non-zero, @a path is expected to be the
  *                    Protégé directory, and the Java library will be
  *                    looked for in the jre/ subdirectory; otherwise,
@@ -149,6 +150,9 @@ load_jre(const char *path, int bundled, void **jre)
     if ( path )
         lib = load_jre_from_path(path, bundled ?
                                  BUNDLED_JAVA_LIB_PATH : JAVA_LIB_PATH);
+
+    if ( ! lib && (path = getenv("PROTEGE_JAVA_HOME")) )
+        lib = load_jre_from_path(path, JAVA_LIB_PATH);
 
     if ( ! lib && (path = getenv("JAVA_HOME")) )
         lib = load_jre_from_path(path, JAVA_LIB_PATH);
