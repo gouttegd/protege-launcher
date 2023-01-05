@@ -34,14 +34,16 @@
 #include <stdlib.h>
 
 /*
- * Hold a NULL-terminated list of strings.
+ * Hold a list of options for the launcher.
  */
 struct option_list {
     size_t      allocated;  /* Number of strings allocated in options
                                (including terminating NULL). */
     size_t      count;      /* Number of strings present in options
                                (excluding terminating NULL). */
-    char      **options;    /* Actual list of strings. */
+    char      **options;    /* Actual list of option strings. */
+    char       *java_home;  /* Additional option specifying a custom
+                               location for the JRE to use. */
 };
 
 #ifdef __cplusplus

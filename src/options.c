@@ -279,6 +279,8 @@ get_option_list(const char *app_dir, struct option_list *list)
                         (void) xasprintf(&opt_string, "-Xss%s", opt_value);
                     else if ( strcmp(line, "append") == 0 )
                         opt_string = xstrdup(opt_value);
+                    else if ( strcmp(line, "java_home") == 0 )
+                        list->java_home = xstrdup(opt_value);
 
                     if ( opt_string )
                         append_option(list, opt_string);
@@ -312,7 +314,7 @@ get_option_list(const char *app_dir, struct option_list *list)
 void
 free_option_list(struct option_list *list)
 {
-    /* Nothing to free if the list only contains the default options. */
+    /* No options to free if the list only contains the default options. */
     if ( list->allocated ) {
         size_t n;
 
@@ -323,4 +325,7 @@ free_option_list(struct option_list *list)
         /* Free the list itself. */
         free(list->options);
     }
+
+    if ( list->java_home )
+        free(list->java_home);
 }
