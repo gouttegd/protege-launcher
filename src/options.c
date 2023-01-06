@@ -36,6 +36,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include <sys/stat.h>
 
@@ -117,6 +118,31 @@ append_option(struct option_list *list, char *option)
 }
 
 /*
+ * Check if a file exists at a constructed pathname.
+ *
+ * Returns a newly allocated buffer containing the pathname to the file
+ * if said file exists, or NULL if the file does not exist.
+ */
+static char *
+try_pathname(const char *fmt, ...)
+{
+    char *path = NULL;
+    va_list ap;
+    struct stat statbuf;
+
+    va_start(ap, fmt);
+    (void) xvasprintf(&path, fmt, ap);
+    va_end(ap);
+
+    if ( stat(path, &statbuf) == -1 ) {
+        free(path);
+        path = NULL;
+    }
+
+    return path;
+}
+
+/*
  * Try to find a jvm.conf configuration file. We look into the user's
  * home directory, then into the Protégé directory.
  *
@@ -127,23 +153,20 @@ static char *
 find_configuration_file(const char *app_dir)
 {
     char *home, *conf_file = NULL;
-    struct stat statbuf;
 
     if ( (home = getenv("HOME")) ) {
-        (void) xasprintf(&conf_file, "%s/.protege/conf/jvm.conf", home);
-        if ( stat(conf_file, &statbuf) == -1 ) {
-            free(conf_file);
-            conf_file = NULL;
-        }
+        conf_file = try_pathname("%s/.Protege/conf/jvm.conf", home);
+
+#if defined(PROTEGE_LINUX)
+        /* Filesystems on GNU/Linux are case-insensitive, so to be on
+         * the safe side we try a lower-case version. */
+        if ( ! conf_file )
+            conf_file = try_pathname("%s/.protege/conf/jvm.conf", home);
+#endif
     }
 
-    if ( ! conf_file ) {
-        (void) xasprintf(&conf_file, "%s/conf/jvm.conf", app_dir);
-        if ( stat(conf_file, &statbuf) == -1 ) {
-            free(conf_file);
-            conf_file = NULL;
-        }
-    }
+    if ( ! conf_file )
+        conf_file = try_pathname("%s/conf/jvm.conf", app_dir);
 
     return conf_file;
 }
