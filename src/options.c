@@ -158,7 +158,7 @@ find_configuration_file(const char *app_dir)
         conf_file = try_pathname("%s/.Protege/conf/jvm.conf", home);
 
 #if defined(PROTEGE_LINUX)
-        /* Filesystems on GNU/Linux are case-insensitive, so to be on
+        /* Filesystems on GNU/Linux are case-sensitive, so to be on
          * the safe side we try a lower-case version. */
         if ( ! conf_file )
             conf_file = try_pathname("%s/.protege/conf/jvm.conf", home);
