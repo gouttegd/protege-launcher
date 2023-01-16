@@ -14,7 +14,7 @@ The recommended way to pass custom Java options to Protégé with this
 launcher is to use a `jvm.conf` configuration file which may be located
 either:
 
-* in the user’s home directory, under `$HOME/.protege/conf/jvm.conf`;
+* in the user’s home directory, under `$HOME/.Protege/conf/jvm.conf`;
 * in the application directory, under `conf/jvm.conf`.
 
 The launcher will look for the user-specific file first; if no such file
@@ -26,7 +26,8 @@ lines starting with `#` are ignored. Currently allowed keys are:
 * `max_heap_size` to set Java’s `-Xmx` option;
 * `min_heap_size` to set Java’s `-Xms` option;
 * `stack_size` to set Java’s `-Xss` option;
-* `append` to set an arbitrary option (may be repeated as needed).
+* `append` to set an arbitrary option (may be repeated as needed);
+* `java_home` to use an alternative Java Runtime Environment.
 
 Sample `jvm.conf` file:
 
@@ -37,9 +38,10 @@ max_heap_size=4G
 append=-Xnoclassgc
 ```
 
-For backwards compatibility, if no `jvm.conf` file is found, the macOS
-and Windows versions of the launcher will try to use the configuration
-methods used in older Protégé versions.
+For backwards compatibility, if no `jvm.conf` file is found or if the
+file does not contain any option, the macOS and Windows versions of the
+launcher will try to use the configuration methods used in older Protégé
+versions.
 
 On macOS, the launcher will look for a `JVMOptions` key in the bundle’s
 `Info.plist` file. That key should contain an array where each item is
