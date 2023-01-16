@@ -1,4 +1,4 @@
-AC_INIT([Protégé launcher], [0.1.0],
+AC_INIT([Protégé launcher], [0.2.0],
         [dpg44@cam.ac.uk], [protege-launcher])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_MACRO_DIR([m4])
