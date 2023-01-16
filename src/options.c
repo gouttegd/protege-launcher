@@ -276,7 +276,10 @@ get_option_list(const char *app_dir, struct option_list *list)
     list->count = n_default_options;
     list->options = (char **) default_options;
 
-    /* Then we look for a configuration file with extra options. */
+    /*
+     * We look for the jvm.conf file that is now the modern,
+     * cross-platform method for specifying extra options.
+     */
     if ( (conf_file = find_configuration_file(app_dir)) ) {
         FILE *f;
         char line[100], *opt_value, *opt_string;
@@ -315,17 +318,19 @@ get_option_list(const char *app_dir, struct option_list *list)
 
         free(conf_file);
     }
+
     /*
-     * Without a configuration file, on macOS and Windows we fallback to
-     * some "legacy" locations where options used to be found in older
-     * versions of Protégé.
+     * If we didn't find any extra options at the standard location
+     * above, we look at some "legacy" locations where options used to
+     * be found in older versions of Protégé.
      */
+    if ( ! list->allocated )
 #if defined(PROTEGE_MACOS)
-    else
         get_options_from_bundle(list);
 #elif defined(PROTEGE_WIN32)
-    else
         get_options_from_l4j_file(app_dir, list);
+#else
+        ;
 #endif
 }
 
