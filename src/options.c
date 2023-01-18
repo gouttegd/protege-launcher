@@ -226,7 +226,7 @@ get_options_from_bundle(struct option_list *list)
 static void
 get_options_from_l4j_file(const char *app_dir, struct option_list *list)
 {
-    char *l4j_filename, line[100];
+    char *l4j_filename, line[512];
     FILE *l4j_file;
     ssize_t n;
 
@@ -282,7 +282,7 @@ get_option_list(const char *app_dir, struct option_list *list)
      */
     if ( (conf_file = find_configuration_file(app_dir)) ) {
         FILE *f;
-        char line[100], *opt_value, *opt_string;
+        char line[512], *opt_value, *opt_string;
         ssize_t n;
 
         if ( (f = fopen(conf_file, "r")) ) {
