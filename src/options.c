@@ -247,6 +247,48 @@ get_options_from_l4j_file(const char *app_dir, struct option_list *list)
 
 #endif
 
+
+/*
+ * Try to set a default value for the max heap setting. If no value
+ * has already been explicitly specified in the option list, this
+ * function attempts to determine a suitable default based on the
+ * amount of physical memory available on the system.
+ */
+void
+set_default_max_heap(struct option_list *list)
+{
+    int is_set = 0;
+    size_t phys_mem;
+
+    if ( list->allocated ) {
+        size_t n;
+
+        for ( n = n_default_options; list->options[n] && is_set == 0; n++ )
+            if ( strncmp(list->options[n], "-Xmx", 4) == 0 )
+                is_set = 1;
+    }
+
+    if ( ! is_set && (phys_mem = get_physical_memory()) != 0 ) {
+        phys_mem /= 1024 * 1024 * 1024;
+
+        if ( phys_mem >= 16 )
+            phys_mem *= .75;
+        else if ( phys_mem >= 8 )
+            phys_mem *= .66;
+        else if ( phys_mem >= 4 )
+            phys_mem *= .5;
+        else
+            phys_mem = 0;
+
+        if ( phys_mem ) {
+            char *option;
+
+            (void) xasprintf(&option, "-Xmx%luG", phys_mem);
+            append_option(list, option);
+        }
+    }
+}
+
 /**
  * Get a list of all options that should be passed to the Java virtual
  * machine.
@@ -332,6 +374,9 @@ get_option_list(const char *app_dir, struct option_list *list)
 #else
         ;
 #endif
+
+    /* Try setting a better default value for -Xmx. */
+    set_default_max_heap(list);
 }
 
 /**

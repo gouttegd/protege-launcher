@@ -42,9 +42,12 @@
 #if defined(PROTEGE_LINUX)
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/sysinfo.h>
 
 #elif defined(PROTEGE_MACOS)
 #include <mach-o/dyld.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
 
 #elif defined(PROTEGE_WIN32)
 #include <windows.h>
@@ -207,4 +210,41 @@ get_line(FILE *f, char *buffer, size_t len)
     buffer[n] = '\0';
 
     return n;
+}
+
+
+/**
+ * Get the amount of physical memory available.
+ *
+ * @return The total physical memory (in bytes), or 0 if we couldn't
+ *         get that information.
+ */
+size_t
+get_physical_memory(void)
+{
+    size_t phys_mem = 0;
+
+#if defined(PROTEGE_LINUX)
+    struct sysinfo info;
+
+    if ( sysinfo(&info) != -1 )
+        phys_mem = info.totalram;
+
+#elif defined(PROTEGE_MACOS)
+    int mib_name[] = { CTL_HW, HW_MEMSIZE };
+    size_t len = sizeof(phys_mem);
+
+    if ( sysctl(mib_name, 2, &phys_mem, &len, NULL, 0) == -1 )
+        phys_mem = 0;
+
+#elif defined(PROTEGE_WIN32)
+    MEMORYSTATUSEX statex;
+
+    statex.dwLength = sizeof(statex);
+    if ( GlobalMemoryStatusEx(&statex) != 0 )
+        phys_mem = statex.ullTotalPhys;
+
+#endif
+
+    return phys_mem;
 }

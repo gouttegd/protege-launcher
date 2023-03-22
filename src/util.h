@@ -46,6 +46,9 @@ get_application_directory(void);
 ssize_t
 get_line(FILE *f, char *buffer, size_t len);
 
+size_t
+get_physical_memory(void);
+
 #ifdef __cplusplus
 }
 #endif
