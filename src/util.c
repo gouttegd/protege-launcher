@@ -40,13 +40,23 @@
 #include <xmem.h>
 
 #if defined(PROTEGE_LINUX)
-
 #include <unistd.h>
 #include <sys/stat.h>
 
+#elif defined(PROTEGE_MACOS)
+#include <mach-o/dyld.h>
+
+#elif defined(PROTEGE_WIN32)
+#include <windows.h>
+
+#endif
+
+
 /**
  * Get Protégé's directory. This returns the pathname to the directory
- * containing this executable and all Protégé files.
+ * containing this executable and all Protégé files. On macOS, this
+ * returns the name of the "Contents" directory within the application
+ * bundle.
  *
  * @return A newly allocated buffer containing the pathname, or NULL if
  *         an error occured.
@@ -54,7 +64,9 @@
 char *
 get_application_directory(void)
 {
-    char *buffer;
+    char *buffer = NULL;
+
+#if defined(PROTEGE_LINUX)
     size_t buffer_len;
     ssize_t bytes_read;
     struct stat statbuf;
@@ -94,24 +106,7 @@ get_application_directory(void)
         errno = ENOENT;
     }
 
-    return buffer;
-}
-
 #elif defined(PROTEGE_MACOS)
-
-#include <mach-o/dyld.h>
-
-/**
- * Get Protégé's directory. This returns the pathname to the "Contents"
- * directory inside the Protégé.app bundle.
- *
- * @return A newly allocated buffer containing the pathname, or NULL if
- *         an error occured.
- */
-char *
-get_application_directory(void)
-{
-    char *buffer = NULL;
     uint32_t buffer_len = 0;
     int n = 2;
 
@@ -138,24 +133,7 @@ get_application_directory(void)
         errno = ENOENT;
     }
 
-    return buffer;
-}
-
 #elif defined(PROTEGE_WIN32)
-
-#include <windows.h>
-
-/**
- * Get Protégé's directory. This returns the pathname to the directory
- * containing this executable and all Protégé files.
- *
- * @return A newly allocated buffer containing the pathname, or NULL if
- *         an error occured.
- */
-char *
-get_application_directory(void)
-{
-    char *buffer;
     DWORD len;
 
     buffer = xmalloc(PROTEGE_PATH_MAX);
@@ -177,10 +155,11 @@ get_application_directory(void)
         }
     }
 
+#endif
+
     return buffer;
 }
 
-#endif
 
 /*
  * Discard characters from the specified stream up to the next
