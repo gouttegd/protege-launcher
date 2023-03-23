@@ -254,7 +254,7 @@ get_options_from_l4j_file(const char *app_dir, struct option_list *list)
  * function attempts to determine a suitable default based on the
  * amount of physical memory available on the system.
  */
-void
+static void
 set_default_max_heap(struct option_list *list)
 {
     int is_set = 0;
@@ -287,6 +287,46 @@ set_default_max_heap(struct option_list *list)
             append_option(list, option);
         }
     }
+}
+
+/*
+ * Construct a option string to set a memory parameter. This function
+ * both checks that the desired value is correct, and handles the '%'
+ * syntax to set a value relative to the amount of physical memory
+ * available on the system.
+ *
+ * @param option The name of the JVM option (-Xmx, etc.).
+ * @param value  The configuration value.
+ *
+ * @return A newly allocated buffer containing an option string ready
+ *         to be passed to the JVM, or NULL if the specified value is
+ *         incorrect or we couldn't get the amount of physical memory.
+ */
+static char *
+make_memory_option(const char *option, const char *value)
+{
+    size_t amount;
+    char unit, *new_opt = NULL;
+
+    if ( sscanf(value, "%lu%c", &amount, &unit) == 2 ) {
+        if ( unit == '%' ) {
+            size_t phys_mem = get_physical_memory();
+
+            if ( phys_mem ) {
+                /* Set the value as fraction of physical memory, rounded
+                 * to the lower megabyte. */
+                amount = (phys_mem * (amount / 100.0)) / (1024 * 1024);
+                unit = 'M';
+            }
+        }
+
+        if ( unit == 'k' || unit == 'K' || \
+                unit == 'm' || unit == 'M' || \
+                unit == 'g' || unit == 'G' )
+            (void) xasprintf(&new_opt, "%s%lu%c", option, amount, unit);
+    }
+
+    return new_opt;
 }
 
 /**
@@ -340,11 +380,11 @@ get_option_list(const char *app_dir, struct option_list *list)
                     *opt_value++ = '\0';
                     opt_string = NULL;
                     if ( strcmp(line, "max_heap_size") == 0 )
-                        (void) xasprintf(&opt_string, "-Xmx%s", opt_value);
+                        opt_string = make_memory_option("-Xmx", opt_value);
                     else if ( strcmp(line, "min_heap_size") == 0 )
-                        (void) xasprintf(&opt_string, "-Xms%s", opt_value);
+                        opt_string = make_memory_option("-Xms", opt_value);
                     else if ( strcmp(line, "stack_size") == 0 )
-                        (void) xasprintf(&opt_string, "-Xss%s", opt_value);
+                        opt_string = make_memory_option("-Xss", opt_value);
                     else if ( strcmp(line, "append") == 0 )
                         opt_string = xstrdup(opt_value);
                     else if ( strcmp(line, "java_home") == 0 )
