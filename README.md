@@ -29,6 +29,12 @@ lines starting with `#` are ignored. Currently allowed keys are:
 * `append` to set an arbitrary option (may be repeated as needed);
 * `java_home` to use an alternative Java Runtime Environment.
 
+For the three memory-related options, the value should be an integer
+followed by either `K`, `M`, or `G` to indicate a memory amount in
+kilobytes, megabytes, or gigabytes respectively (lowercase letters can
+also be used), or `%` to indicate an amount relative to the total memory
+available on the system.
+
 Sample `jvm.conf` file:
 
 ```
