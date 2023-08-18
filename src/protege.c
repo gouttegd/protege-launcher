@@ -64,9 +64,6 @@ main(int argc, char **argv)
     void* jre;
     int ret;
 
-    (void) argc;
-    (void) argv;
-
 #if defined(PROTEGE_WIN32)
     /* If the launcher was started from a terminal, let's make sure
      * it is used to display what we send to the output streams. */
@@ -97,7 +94,7 @@ main(int argc, char **argv)
     if ( (ret = start_java(jre,
                            (const char **)opt_list.options,
                            "org/protege/osgi/framework/Launcher",
-                           NULL)) != 0 )
+                           argc > 1 ? (const char **)&(argv[1]) : NULL)) != 0 )
         errx(EXIT_FAILURE, "Cannot start Java: %s", get_java_error(ret));
 
     return EXIT_SUCCESS;
