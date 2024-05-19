@@ -59,6 +59,7 @@ static const char *default_options[] = {
     "-DentityExpansionLimit=100000000",
     "-Dfile.encoding=UTF-8",
     "-XX:CompileCommand=exclude,javax/swing/text/GlyphView,getBreakSpot",
+    "--add-opens=java.desktop/sun.swing=ALL-UNNAMED",
 #if defined(PROTEGE_MACOS)
     "-Dapple.laf.useScreenMenuBar=true",
     "-Dcom.apple.mrj.application.apple.menu.about.name=Protege",
