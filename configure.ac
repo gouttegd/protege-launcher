@@ -9,8 +9,13 @@ AC_USE_SYSTEM_EXTENSIONS
 AM_INIT_AUTOMAKE([foreign subdir-objects silent-rules])
 
 dnl Program infos
-PROTEGE_WINDOWS_VERSION="5, 6, 3, 0"
-PROTEGE_VERSION="5.6.3"
+AC_ARG_WITH([windows-version],
+            [AS_HELP_STRING([--with-windows-version],
+                            [Version number to embed in the Windows executable])],
+            [],
+            [with_windows_version=5.6.4])
+PROTEGE_WINDOWS_VERSION="`echo $with_windows_version | tr . ,`,0"
+PROTEGE_VERSION="${with_windows_version}.0"
 AC_SUBST([PROTEGE_WINDOWS_VERSION])
 AC_SUBST([PROTEGE_VERSION])
 
