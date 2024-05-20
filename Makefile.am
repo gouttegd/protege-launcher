@@ -1,6 +1,6 @@
 ACLOCAL_AMFLAGS = -I m4 --install
 
-dist_doc_DATA = AUTHORS COPYING.BSD COPYING.GPL README.md src/protege.ico
+dist_doc_DATA = AUTHORS COPYING.BSD COPYING.GPL README.md src/protege.ico helpers/prepare-jre.sh
 
 bin_PROGRAMS = protege
 
