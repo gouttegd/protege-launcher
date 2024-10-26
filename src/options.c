@@ -309,7 +309,7 @@ make_memory_option(const char *option, const char *value)
     size_t amount;
     char unit, *new_opt = NULL;
 
-    if ( sscanf(value, "%lu%c", &amount, &unit) == 2 ) {
+    if ( sscanf(value, "%zu%c", &amount, &unit) == 2 ) {
         if ( unit == '%' ) {
             size_t phys_mem = get_physical_memory();
 
