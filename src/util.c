@@ -41,8 +41,10 @@
 
 #if defined(PROTEGE_LINUX)
 #include <unistd.h>
+#include <dlfcn.h>
 #include <sys/stat.h>
 #include <sys/sysinfo.h>
+#include <X11/Xlib.h>
 
 #elif defined(PROTEGE_MACOS)
 #include <mach-o/dyld.h>
@@ -248,3 +250,50 @@ get_physical_memory(void)
 
     return phys_mem;
 }
+
+#if defined(PROTEGE_LINUX)
+
+/**
+ * Get the resolution of the screen in DPI.
+ *
+ * @param[out] hres The horizontal resolution.
+ * @param[out] vres The vertical resolution.
+ * @return 0 if successful, or -1 if we could not get the resolution.
+ */
+int
+get_screen_dpi(int *hres, int *vres)
+{
+    void *xlib;
+    int ret = -1;
+    double h, v;
+    Display *dpy;
+    Display * (*xOpenDisplay)(char *);
+    int (*xCloseDisplay)(Display *);
+
+    xlib = dlopen("libX11.so.6", RTLD_LAZY);
+    if ( xlib ) {
+        xOpenDisplay = (Display * (*)(char *)) dlsym(xlib, "XOpenDisplay");
+        xCloseDisplay = (int (*)(Display *)) dlsym(xlib, "XCloseDisplay");
+
+        if ( xOpenDisplay && xCloseDisplay ) {
+            dpy = xOpenDisplay(getenv("DISPLAY"));
+
+            if ( dpy ) {
+                h = ((((double) DisplayWidth (dpy, 0)) * 25.4) / ((double) DisplayWidthMM (dpy, 0)));
+                v = ((((double) DisplayHeight(dpy, 0)) * 25.4) / ((double) DisplayHeightMM(dpy, 0)));
+                xCloseDisplay(dpy);
+
+                *hres = (int) (h + 0.5);
+                *vres = (int) (v + 0.5);
+
+                ret = 0;
+            }
+        }
+
+        dlclose(xlib);
+    }
+
+    return ret;
+}
+
+#endif /* !PROTEGE_LINUX */

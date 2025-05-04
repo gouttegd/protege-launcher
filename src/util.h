@@ -49,6 +49,11 @@ get_line(FILE *f, char *buffer, size_t len);
 size_t
 get_physical_memory(void);
 
+#if defined(PROTEGE_LINUX)
+int
+get_screen_dpi(int *hres, int *vres);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

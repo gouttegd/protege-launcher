@@ -330,6 +330,52 @@ make_memory_option(const char *option, const char *value)
     return new_opt;
 }
 
+
+#if defined(PROTEGE_LINUX) && defined(UI_AUTO_SCALING)
+
+/*
+ * Try to automatically set the "UI scaling" parameter of the Java
+ * Virtual Machine, if we can detect that we are on a machine with
+ * a HiDPI display.
+ */
+static void
+set_ui_scaling(struct option_list *list)
+{
+    int is_set = 0;
+    int hres, vres, res, factor;
+    char * opt = NULL;
+
+    if ( list->allocated ) {
+        size_t n;
+
+        /* If the user has already explicit set the UI scaling option,
+         * do not override it. */
+        for ( n = n_default_options; list->options[n] && is_set == 0; n++ )
+            if ( strncmp(list->options[n], "-Dsun.java2d.uiScale", 20) == 0 )
+                is_set = 1;
+    }
+
+    if ( !is_set && get_screen_dpi(&hres, &vres) != -1 ) {
+        /* Not sure what to do if horizontal and vertical resolution are
+         * different (does that even happen?). For now, we just take
+         * whichever value is the highest. */
+        res = hres > vres ? hres : vres;
+
+        /* Apparently the JVM on GNU/Linux does not support fractional
+         * scaling (e.g., a factor of 1.5 will have no effect), so we
+         * round up to an integer factor. */
+        factor = (int) ((res / 96.0) + 0.5);
+
+        if ( factor > 1 ) {
+            (void) xasprintf(&opt, "-Dsun.java2d.uiScale=%d", factor);
+            append_option(list, opt);
+        }
+    }
+}
+
+#endif
+
+
 /**
  * Get a list of all options that should be passed to the Java virtual
  * machine.
@@ -418,6 +464,10 @@ get_option_list(const char *app_dir, struct option_list *list)
 
     /* Try setting a better default value for -Xmx. */
     set_default_max_heap(list);
+
+#if defined(PROTEGE_LINUX) && defined(UI_AUTO_SCALING)
+    set_ui_scaling(list);
+#endif
 }
 
 /**
