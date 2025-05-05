@@ -33,6 +33,8 @@
 
 #include <stdlib.h>
 
+#define PROTEGE_FLAG_UI_AUTO_SCALING	0x01
+
 /*
  * Hold a list of options for the launcher.
  */
@@ -44,6 +46,7 @@ struct option_list {
     char      **options;    /* Actual list of option strings. */
     char       *java_home;  /* Additional option specifying a custom
                                location for the JRE to use. */
+    unsigned    flags;      /* Misc additional options. */
 };
 
 #ifdef __cplusplus

@@ -67,11 +67,11 @@ AC_ARG_WITH([min-osx-version],
 dnl Support for UI auto-scaling on GNU/Linux
 AC_ARG_ENABLE([ui-scaling],
               [AS_HELP_STRING([--enable-ui-scaling],
-                              [Enable UI auto-scaling on GNU/Linux.])],
+                              [Enable UI auto-scaling by default on GNU/Linux.])],
               [enable_ui_auto_scaling=$enableval],
               [enable_ui_auto_scaling=no])
 AS_IF([test "x$enable_ui_auto_scaling" = xyes],
-      [AC_DEFINE([UI_AUTO_SCALING], [1], [Enable UI auto-scaling])])
+      [AC_DEFINE([UI_AUTO_SCALING], [1], [Enable UI auto-scaling by default])])
 
 dnl Host-based tweaks
 AC_CANONICAL_HOST

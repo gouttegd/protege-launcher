@@ -331,7 +331,7 @@ make_memory_option(const char *option, const char *value)
 }
 
 
-#if defined(PROTEGE_LINUX) && defined(UI_AUTO_SCALING)
+#if defined(PROTEGE_LINUX)
 
 /*
  * Try to automatically set the "UI scaling" parameter of the Java
@@ -405,6 +405,11 @@ get_option_list(const char *app_dir, struct option_list *list)
     list->count = n_default_options;
     list->options = (char **) default_options;
 
+#if defined(PROTEGE_LINUX) && defined(UI_AUTO_SCALING)
+    /* Enable UI scaling by default unless explicitly disabled. */
+    list->flags = PROTEGE_FLAG_UI_AUTO_SCALING;
+#endif
+
     /*
      * We look for the jvm.conf file that is now the modern,
      * cross-platform method for specifying extra options.
@@ -436,6 +441,12 @@ get_option_list(const char *app_dir, struct option_list *list)
                         opt_string = xstrdup(opt_value);
                     else if ( strcmp(line, "java_home") == 0 )
                         list->java_home = xstrdup(opt_value);
+                    else if ( strcmp(line, "ui_auto_scaling") == 0 ) {
+                        if ( strcmp(opt_value, "yes") == 0 )
+                            list->flags |= PROTEGE_FLAG_UI_AUTO_SCALING;
+                        else
+                            list->flags &= !PROTEGE_FLAG_UI_AUTO_SCALING;
+                    }
 
                     if ( opt_string )
                         append_option(list, opt_string);
@@ -465,8 +476,9 @@ get_option_list(const char *app_dir, struct option_list *list)
     /* Try setting a better default value for -Xmx. */
     set_default_max_heap(list);
 
-#if defined(PROTEGE_LINUX) && defined(UI_AUTO_SCALING)
-    set_ui_scaling(list);
+#if defined(PROTEGE_LINUX)
+    if ( list->flags & PROTEGE_FLAG_UI_AUTO_SCALING )
+        set_ui_scaling(list);
 #endif
 }
 
