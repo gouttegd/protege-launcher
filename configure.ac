@@ -1,4 +1,4 @@
-AC_INIT([Protégé launcher], [0.3.2],
+AC_INIT([Protégé launcher], [0.3.3],
         [dpg44@cam.ac.uk], [protege-launcher])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_MACRO_DIR([m4])
@@ -13,7 +13,7 @@ AC_ARG_WITH([windows-version],
             [AS_HELP_STRING([--with-windows-version],
                             [Version number to embed in the Windows executable])],
             [],
-            [with_windows_version=5.6.4])
+            [with_windows_version=5.6.6])
 PROTEGE_WINDOWS_VERSION="`echo $with_windows_version | tr . ,`,0"
 PROTEGE_VERSION="${with_windows_version}.0"
 AC_SUBST([PROTEGE_WINDOWS_VERSION])
