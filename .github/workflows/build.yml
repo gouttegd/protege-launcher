@@ -52,7 +52,7 @@ jobs:
         run: |
           tar xf protege-launcher-${{ needs.build_linux.outputs.launcher_version }}.tar.gz
           cd protege-launcher-${{ needs.build_linux.outputs.launcher_version }}
-          ./configure --with-jdk=../jdk-11.0.29+7/Contents/Home/include
+          ./configure --with-jdk=../jdk-11.0.29+7/Contents/Home
           make
 
   build_windows:
