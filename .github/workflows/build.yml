@@ -1,0 +1,80 @@
+name: Test building the launcher
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build_linux:
+    name: Build the source distribution
+    runs-on: ubuntu-latest
+    outputs:
+      launcher_version: ${{ steps.find_version.outputs.launcher_version }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+      - id: find_version
+        name: Determine current version
+        run: sed -E -e 's/^AC_INIT\(\[Protégé launcher\], \[(.*)\],/launcher_version=\1/;q' configure.ac >> "$GITHUB_OUTPUT"
+      - name: Download OpenJDK
+        run: |
+          curl -L -O https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.29%2B7/OpenJDK11U-jdk_x64_linux_hotspot_11.0.29_7.tar.gz
+          tar xf OpenJDK11U-jdk_x64_linux_hotspot_11.0.29_7.tar.gz
+      - name: Generate the build system
+        run: autoreconf --install
+      - name: Configure the distribution
+        run: ./configure --with-jdk=jdk-11.0.29+7
+      - name: Build
+        run: make dist
+      - name: Upload source distribution
+        uses: actions/upload-artifact@v4
+        with:
+          name: source_dist
+          path: protege-launcher-${{ steps.find_version.outputs.launcher_version }}.tar.gz
+
+  build_macos:
+    name: Build for macOS
+    needs: build_linux
+    runs-on: macos-15
+    steps:
+      - name: Download source distribution
+        uses: actions/download-artifact@v5
+        with:
+          name: source_dist
+      - name: Download OpenJDK
+        run: |
+          curl -L -O https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.29%2B7/OpenJDK11U-jdk_aarch64_mac_hotspot_11.0.29_7.tar.gz
+          tar xf OpenJDK11U-jdk_aarch64_mac_hotspot_11.0.29_7.tar.gz
+      - name: Build
+        run: |
+          tar xf protege-launcher-${{ needs.build_linux.outputs.launcher_version }}.tar.gz
+          cd protege-launcher-${{ needs.build_linux.outputs.launcher_version }}
+          ./configure --with-jdk=../jdk-11.0.29+7/Contents/Home/include
+          make
+
+  build_windows:
+    name: Build for Windows
+    needs: build_linux
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up MinGW
+        uses: egor-tensin/setup-mingw@v3
+        with:
+          platform: x64
+      - name: Download source distribution
+        uses: actions/download-artifact@v5
+        with:
+          name: source_dist
+      - name: Download OpenJDK
+        run: |
+          curl -L -O https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.29%2B7/OpenJDK11U-jdk_x64_windows_hotspot_11.0.29_7.zip
+          unzip OpenJDK11U-jdk_x64_windows_hotspot_11.0.29_7.zip
+      - name: Build
+        run: |
+          tar xf protege-launcher-${{ needs.build_linux.outputs.launcher_version }}.tar.gz
+          cd protege-launcher-${{ needs.build_linux.outputs.launcher_version }}
+          ./configure --host=x86_64-w64-mingw32 --with-jdk=../jdk-11.0.29+7
+          make
