@@ -50,13 +50,12 @@
 /*
  * JAVA_LIB_PATH is the name and location of the main Java library
  * (the library containing the JNI_CreateJavaVM function) within the
- * JRE. This seems to change depending on the JRE version, the locations
- * used here are correct for the JRE 11 used by Protégé 5.6.0.
+ * JRE.
  */
 #if   defined(PROTEGE_LINUX)
 #define JAVA_LIB_PATH "/lib/server/libjvm.so"
 #elif defined(PROTEGE_MACOS)
-#define JAVA_LIB_PATH "/lib/jli/libjli.dylib"
+#define JAVA_LIB_PATH "/lib/server/libjvm.dylib"
 #elif defined(PROTEGE_WIN32)
 #define JAVA_LIB_PATH "\\bin\\server\\jvm.dll"
 #endif

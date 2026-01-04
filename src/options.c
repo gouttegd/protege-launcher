@@ -65,6 +65,7 @@ static const char *default_options[] = {
     "-Dcom.apple.mrj.application.apple.menu.about.name=Protege",
     "-Xdock:name=Protege",
     "-Xdock:icon=Resources/Protege.icns",
+    "--add-opens=java.desktop/com.apple.laf=ALL-UNNAMED",
 #endif
     "-Djava.class.path=bundles/guava.jar"
       JAVA_CLASSPATH_SEPARATOR "bundles/logback-classic.jar"
