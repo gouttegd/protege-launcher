@@ -40,13 +40,14 @@
 #define JAVA_CREATE_VM_ERROR        -5
 #define JAVA_CREATE_THREAD_ERROR    -6
 #define JAVA_DLOPEN_ERROR           -7
+#define JAVA_HOME_NOT_FOUND         -8
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 int
-load_jre(const char *path, int bundled, void **jre);
+load_jre(const char *path, void **jre);
 
 int
 start_java(void        *jre,

@@ -84,10 +84,7 @@ main(int argc, char **argv)
 
     get_option_list(app_dir, &opt_list);
 
-    if ( opt_list.java_home )
-        ret = load_jre(opt_list.java_home, 0, &jre);
-    else
-        ret = load_jre(app_dir, 1, &jre);
+    ret = load_jre(opt_list.java_home, &jre);
     if ( ret != 0 )
         errx(EXIT_FAILURE, "Cannot load JRE: %s", get_java_error(ret));
 

@@ -60,16 +60,6 @@
 #define JAVA_LIB_PATH "\\bin\\server\\jvm.dll"
 #endif
 
-/*
- * BUNDLED_JAVA_LIB_PATH is the location of the Java library within
- * Protégé's directory, when using the bundled JRE.
- */
-#if defined(PROTEGE_WIN32)
-#define BUNDLED_JAVA_LIB_PATH "\\jre" JAVA_LIB_PATH
-#else
-#define BUNDLED_JAVA_LIB_PATH "/jre" JAVA_LIB_PATH
-#endif
-
 
 typedef jint (JNICALL CreateJavaVM_t)(JavaVM **vm, JNIEnv **env, JavaVMInitArgs *args);
 
@@ -127,13 +117,10 @@ load_jre_from_path(const char *base_path, const char *lib_path)
  * Attempt to load the Java library.
  *
  * @param[in] path    The base directory from where the Java library
- *                    should be loaded; if NULL, PROTEGE_JAVA_HOME and
- *                    JAVA_HOME will be successively tested if they are
- *                    defined in the environment.
- * @param[in] bundled If non-zero, @a path is expected to be the
- *                    Protégé directory, and the Java library will be
- *                    looked for in the jre/ subdirectory; otherwise,
- *                    @a path is assumed to be a JRE directory.
+ *                    should be loaded; if NULL or if a JRE cannot be
+ *                    found at the specified location, the value of the
+ *                    JAVA_HOME environment variable (if it exists) will
+ *                    be used instead.
  * @param[out] jre    A pointer that will receive the handle to the
  *                    Java library after it has been loaded.
  *
@@ -142,22 +129,18 @@ load_jre_from_path(const char *base_path, const char *lib_path)
  * - JAVA_DLOPEN_ERROR if an error occured.
  */
 int
-load_jre(const char *path, int bundled, void **jre)
+load_jre(const char *path, void **jre)
 {
     void *lib = NULL;
 
     if ( path )
-        lib = load_jre_from_path(path, bundled ?
-                                 BUNDLED_JAVA_LIB_PATH : JAVA_LIB_PATH);
-
-    if ( ! lib && (path = getenv("PROTEGE_JAVA_HOME")) )
         lib = load_jre_from_path(path, JAVA_LIB_PATH);
 
     if ( ! lib && (path = getenv("JAVA_HOME")) )
         lib = load_jre_from_path(path, JAVA_LIB_PATH);
 
     *jre = lib;
-    return lib ? 0 : JAVA_DLOPEN_ERROR;
+    return lib ? 0 : path ? JAVA_HOME_NOT_FOUND : JAVA_DLOPEN_ERROR;
 }
 
 /*
@@ -403,6 +386,7 @@ get_java_error(int code)
     case JAVA_CREATE_VM_ERROR: return "Cannot create Java virtual machine";
     case JAVA_CREATE_THREAD_ERROR: return "Cannot create Java thread";
     case JAVA_DLOPEN_ERROR: return dlerror();
+    case JAVA_HOME_NOT_FOUND: return "JRE not found";
     default: return "Unknown error";
     }
 }

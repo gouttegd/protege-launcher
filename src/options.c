@@ -46,8 +46,10 @@
 
 #if defined(PROTEGE_WIN32)
 #define JAVA_CLASSPATH_SEPARATOR ";"
+#define DIRECTORY_SEPARATOR "\\"
 #else
 #define JAVA_CLASSPATH_SEPARATOR ":"
+#define DIRECTORY_SEPARATOR "/"
 #endif
 
 /*
@@ -473,6 +475,16 @@ get_option_list(const char *app_dir, struct option_list *list)
 #else
         ;
 #endif
+
+    /* Find JAVA_HOME, if not found in the configuration file. */
+    if ( ! list->java_home ) {
+        char *java_home;
+
+        if ( (java_home = getenv("PROTEGE_JAVA_HOME")) )
+            list->java_home = xstrdup(java_home);
+        else
+            (void) xasprintf(&(list->java_home), "%s" DIRECTORY_SEPARATOR "jre", app_dir);
+    }
 
     /* Try setting a better default value for -Xmx. */
     set_default_max_heap(list);
