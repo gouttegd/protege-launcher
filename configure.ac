@@ -1,5 +1,5 @@
 AC_INIT([Protégé launcher], [0.3.4],
-        [dpg44@cam.ac.uk], [protege-launcher])
+        [damien@gerbi-gmb.de], [protege-launcher])
 AC_CONFIG_SRCDIR([configure.ac])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([config])
